@@ -1,0 +1,60 @@
+# ============================================================
+# Petra Panel Workshop v2 — .streamlit/config.toml
+# Place this file at:  <repo_root>/.streamlit/config.toml
+# ============================================================
+
+
+# ── Server ───────────────────────────────────────────────────
+[server]
+
+# Streamlit Cloud manages the port automatically; 8501 is the
+# standard for local development.
+port = 8501
+
+# Required on Streamlit Cloud — disables the browser auto-open
+# that would fail in a headless container.
+headless = true
+
+# Allow all origins so Streamlit Cloud's reverse proxy works.
+enableCORS = false
+enableXsrfProtection = true
+
+# Maximum upload size in MB.
+# Raise this if technicians upload high-res fault photos.
+maxUploadSize = 10
+
+
+# ── Theme  ───────────────────────────────────────────────────
+[theme]
+
+# Industrial dark theme — easy on the eyes in a bright workshop.
+base = "dark"
+
+# Petra Engineering brand blue
+primaryColor        = "#4FC3F7"
+
+# Dark navy background matching the KPI cards in main.py
+backgroundColor     = "#0E1117"
+secondaryBackgroundColor = "#1E2A3A"
+
+# Body text
+textColor           = "#FAFAFA"
+
+# UI font — clean and highly legible on small workshop tablets
+font = "sans serif"
+
+
+# ── Browser tab ──────────────────────────────────────────────
+[browser]
+
+# Disables the "Deploy this app" button — keeps the UI clean
+# for internal workshop use.
+gatherUsageStats = false
+
+
+# ── Logger ───────────────────────────────────────────────────
+[logger]
+
+# Options: "error" | "warning" | "info" | "debug"
+# Use "warning" in production; switch to "debug" when troubleshooting.
+level = "warning"
