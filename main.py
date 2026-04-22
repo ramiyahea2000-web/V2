@@ -509,10 +509,10 @@ with tab_submit:
                     toggle_resolved(e["id"])
                     st.rerun()
                     img_path = e.get("image_path")
-                if img_path and os.path.exists(img_path):
+                  if img_path and os.path.exists(img_path):
                    st.image(img_path, use_container_width=True)
-                else:
-                 st.info("📸 لا توجد صورة")
+                  else:
+                   st.info("📸 لا توجد صورة")
 
 
 
