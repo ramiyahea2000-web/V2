@@ -508,9 +508,12 @@ with tab_submit:
                 if st.button("Toggle Resolved", key=f"res_{e['id']}"):
                     toggle_resolved(e["id"])
                     st.rerun()
-            with col_b:
-                if e["image_path"] and os.path.exists(e["image_path"]):
-                    st.image(e["image_path"], use_container_width=True)
+                    img_path = e.get("image_path")
+        if img_path and os.path.exists(img_path):
+            st.image(img_path, use_container_width=True)
+        else:
+            st.info("📸 لا توجد صورة")
+
 
 
 # ===========================  TAB 2 : DASHBOARD  ===========================
