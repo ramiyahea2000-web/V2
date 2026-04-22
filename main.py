@@ -519,4 +519,141 @@ with tab_dash:
 
     kpi = get_kpi_stats()
     k1, k2, k3, k4, k5 = st.columns(5)
-    for col, label, va
+    for col, label, val in [
+        (k1, "Total Reports",   kpi["total"]),
+        (k2, "Open Issues",     kpi["open"]),
+        (k3, "Closed Issues",   kpi["closed"]),
+        (k4, "Critical Codes",  kpi["critical_codes"]),
+        (k5, "This Week",       kpi["week"]),
+    ]:
+        col.markdown(
+            f'<div class="kpi-card"><div class="kpi-value">{val}</div>'
+            f'<div class="kpi-label">{label}</div></div>',
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("---")
+    charts = get_chart_data()
+
+    if charts.get("top") is not None and not charts["top"].empty:
+        col_l, col_r = st.columns(2)
+        with col_l:
+            st.markdown("#### 🔴 Top 10 Faulty Petra Codes")
+            st.bar_chart(charts["top"].set_index("petra_code")["reports"])
+        with col_r:
+            st.markdown("#### 📅 Daily Fault Trend (Last 30 Days)")
+            if not charts["trend"].empty:
+                st.line_chart(charts["trend"].set_index("day")["reports"])
+            else:
+                st.info("Not enough data yet.")
+
+        col_m, col_n = st.columns(2)
+        with col_m:
+            st.markdown("#### ⚠️ Severity Breakdown")
+            st.bar_chart(charts["severity"].set_index("severity")["count"])
+        with col_n:
+            st.markdown("#### 🏭 Faults by Supplier")
+            if not charts["supplier"].empty:
+                st.bar_chart(charts["supplier"].set_index("supplier")["faults"])
+
+    st.markdown("---")
+    st.subheader("🚨 Critical Petra Codes")
+    critical = get_critical_petra_codes()
+    if critical:
+        crit_df = pd.DataFrame([dict(r) for r in critical])
+        st.dataframe(crit_df, use_container_width=True)
+        all_rows = get_all_entries()
+        st.download_button(
+            label="⬇️ Download Full Excel Report",
+            data=build_excel_report(all_rows),
+            file_name=f"petra_fault_report_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+    else:
+        st.success("No Petra codes have exceeded the alarm threshold. System is healthy.")
+
+    if st.button("🔄 Sync to Google Sheets"):
+        sync_to_gsheets()
+
+
+# =======================  TAB 3 : SEARCH & FILTER  ========================
+with tab_search:
+    st.subheader("Search & Filter Entries")
+
+    fc1, fc2, fc3, fc4 = st.columns(4)
+    with fc1:
+        f_project  = st.text_input("Project Number")
+    with fc2:
+        f_supplier = st.text_input("Supplier")
+    with fc3:
+        f_severity = st.selectbox("Severity", ["", "High", "Medium", "Low"])
+    with fc4:
+        f_resolved = st.selectbox("Status", ["All", "Open", "Closed"])
+
+    dc1, dc2 = st.columns(2)
+    with dc1:
+        f_date_from = st.date_input("From Date", value=None)
+    with dc2:
+        f_date_to   = st.date_input("To Date",   value=None)
+
+    if st.button("Apply Filters", type="primary"):
+        results = get_filtered_entries(
+            project   = f_project.strip(),
+            supplier  = f_supplier.strip(),
+            severity  = f_severity,
+            resolved  = f_resolved,
+            date_from = str(f_date_from) if f_date_from else "",
+            date_to   = str(f_date_to)   if f_date_to   else "",
+        )
+        st.info(f"Found **{len(results)}** entries.")
+        if results:
+            df = pd.DataFrame([dict(r) for r in results])
+            st.dataframe(df, use_container_width=True)
+            st.download_button(
+                "⬇️ Export Filtered Results",
+                data=build_excel_report(results),
+                file_name="filtered_report.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+
+
+# ===========================  TAB 4 : ADMIN  ===============================
+with tab_admin:
+    st.subheader("Admin Panel")
+
+    with st.expander("🗑️ Delete Entries", expanded=False):
+        all_entries = get_all_entries()
+        if not all_entries:
+            st.info("No entries to delete.")
+        else:
+            options = {
+                f"ID:{e['id']}  |  {e['timestamp']}  |  Petra: {e['petra_code']}": e["id"]
+                for e in all_entries
+            }
+            selected = st.multiselect("Select entries to delete", list(options.keys()))
+            if st.button("Delete Selected", type="primary", disabled=not selected):
+                delete_entries([options[s] for s in selected])
+                st.success(f"Deleted {len(selected)} entries.")
+                st.rerun()
+
+    with st.expander("📤 Export / Backup", expanded=False):
+        all_entries = get_all_entries()
+        if all_entries:
+            st.download_button(
+                "⬇️ Download Full Database Export",
+                data=build_excel_report(all_entries),
+                file_name=f"full_backup_{datetime.now().strftime('%Y%m%d')}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        if st.button("☁️ Manual Google Sheets Sync"):
+            sync_to_gsheets()
+
+    with st.expander("ℹ️ System Info", expanded=False):
+        st.markdown(f"""
+        | Parameter | Value |
+        |---|---|
+        | DB Path | `{DB_PATH}` |
+        | Upload Dir | `{UPLOAD_DIR}` |
+        | Alarm Threshold | `{ALARM_THRESHOLD}` |
+        | App Version | `2.0.0` |
+        """)
