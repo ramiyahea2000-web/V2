@@ -1,30 +1,5 @@
-# ============================================================
-# Petra Panel Workshop v2 — requirements.txt
-# Target: Streamlit Cloud (Python 3.11)
-# Last updated: 2026-04
-# ============================================================
-
-# ── Core framework ───────────────────────────────────────────
-streamlit==1.35.0
-
-# ── Data processing ──────────────────────────────────────────
-pandas==2.2.2
-numpy==1.26.4          # pandas runtime dependency, pin for stability
-
-# ── Excel export ─────────────────────────────────────────────
-openpyxl==3.1.2        # used by pandas ExcelWriter for .xlsx output
-
-# ── Image handling ───────────────────────────────────────────
-Pillow==10.3.0
-
-# ── Google Sheets sync (Option A persistence)  ───────────────
-# Remove these two lines if you are NOT using Google Sheets.
-gspread==6.1.2
-google-auth==2.29.0
-
-# ── PDF report generation (Feature 1 — optional)  ────────────
-# Uncomment when you implement automated PDF fault reports.
-# reportlab==4.2.0
-
-# ── Standard library modules used (no install needed) ────────
-# sqlite3, os, io, uuid, logging, datetime — all built-in to Python 3.x
+streamlit
+pandas
+openpyxl
+xlsxwriter
+Pillow
