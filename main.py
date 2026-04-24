@@ -296,17 +296,18 @@ def get_chart_data() -> dict:
 
 
 def save_image(uploaded_file) -> str | None:
-    """Save uploaded image to uploads/ and return its RELATIVE path for DB storage."""
+    """Save uploaded image to UPLOAD_DIR and return ONLY the filename for DB storage."""
     try:
-        # Relative path — stays valid across Streamlit Cloud restarts
-        file_path = os.path.join("uploads", f"{int(time.time())}_{uploaded_file.name}")
+        if not os.path.exists(UPLOAD_DIR):
+            os.makedirs(UPLOAD_DIR)
+        filename = f"{int(time.time())}_{uploaded_file.name}"
+        file_path = os.path.join(UPLOAD_DIR, filename)
         img = Image.open(uploaded_file).convert("RGB")
         img.save(file_path, optimize=True)
         log.info("Image saved: %s", file_path)
-        return file_path          # e.g.  "uploads/1714000000_photo.jpg"
+        return filename           # e.g.  "1714000000_photo.jpg"  — path rebuilt at display time
     except Exception as exc:
         log.error("save_image: %s", exc)
-        st.warning(f"Image could not be saved: {exc}")
         return None
 
 
@@ -513,12 +514,13 @@ with tab_submit:
                     st.rerun()
             with col_b:
                 if e["image_path"]:
-                    # Resolve relative path from the app's working directory
-                    abs_path = os.path.join(os.getcwd(), e["image_path"])
-                    if os.path.exists(abs_path):
-                        st.image(abs_path, use_container_width=True)
+                    full_img_path = os.path.join(UPLOAD_DIR, e["image_path"])
+                    if os.path.exists(full_img_path):
+                        st.image(full_img_path, use_container_width=True)
                     else:
-                        st.caption("📷 Image not available")
+                        st.caption("📷 Image file not found")
+                else:
+                    st.caption("🚫 No image")
 
 
 # ===========================  TAB 2 : DASHBOARD  ===========================
