@@ -513,14 +513,24 @@ with tab_submit:
             with col_b:
                 img_filename = e["image_path"]
                 if img_filename:
-                    full_img_path = os.path.join(UPLOAD_DIR, img_filename)
-                    if os.path.exists(full_img_path):
+                    full_path = os.path.join(UPLOAD_DIR, img_filename)
+                    if os.path.exists(full_path):
                         try:
-                            st.image(full_img_path, use_container_width=True)
+                            st.image(full_path, use_container_width=True)
                         except Exception:
-                            st.caption("⚠️ Error loading image file")
+                            st.caption("⚠️ Could not render image")
+                        # Fail-safe download — available whether st.image succeeds or not
+                        with open(full_path, "rb") as img_file:
+                            st.download_button(
+                                label="⬇️ Download Image",
+                                data=img_file.read(),
+                                file_name=img_filename,
+                                mime="image/png",
+                                key=f"dl_{e['id']}",
+                                use_container_width=True,
+                            )
                     else:
-                        st.caption("📷 Image not found on server")
+                        st.info("No image file found on server")
                 else:
                     st.caption("🚫 No image attached")
 
