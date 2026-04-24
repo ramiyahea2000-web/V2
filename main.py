@@ -496,16 +496,14 @@ with tab_submit:
             e["severity"], "badge-medium"
         )
         status_icon = "✅" if e["resolved"] else "🔴"
-        with st.expander(
-            f"{status_icon}  {e['timestamp']}  |  Petra: **{e['petra_code']}**"
-        ):
+        with st.expander(f"{status_icon} {e['timestamp']} | Petra: {e['petra_code']}"):
             col_a, col_b = st.columns([2, 1])
             with col_a:
                 st.markdown(
                     f"**Part:** {e['part_number'] or '-'}  \n"
                     f"**Project:** {e['project_number'] or '-'}  \n"
                     f"**Supplier:** {e['supplier'] or '-'}  \n"
-                    f"**Severity:** <span class='{sev_cls}'>{e['severity']}</span>  \n"
+                    f"**Severity:** {e['severity']}  \n"
                     f"**Notes:** {e['notes'] or 'None'}",
                     unsafe_allow_html=True,
                 )
@@ -513,14 +511,18 @@ with tab_submit:
                     toggle_resolved(e["id"])
                     st.rerun()
             with col_b:
-                if e["image_path"]:
-                    full_img_path = os.path.join(UPLOAD_DIR, e["image_path"])
+                img_filename = e["image_path"]
+                if img_filename:
+                    full_img_path = os.path.join(UPLOAD_DIR, img_filename)
                     if os.path.exists(full_img_path):
-                        st.image(full_img_path, use_container_width=True)
+                        try:
+                            st.image(full_img_path, use_container_width=True)
+                        except Exception:
+                            st.caption("⚠️ Error loading image file")
                     else:
-                        st.caption("📷 Image file not found")
+                        st.caption("📷 Image not found on server")
                 else:
-                    st.caption("🚫 No image")
+                    st.caption("🚫 No image attached")
 
 
 # ===========================  TAB 2 : DASHBOARD  ===========================
