@@ -11,6 +11,7 @@ Version : 2.0.0
 import os
 import io
 import uuid
+import time
 import logging
 from datetime import datetime, timedelta
 
@@ -37,6 +38,7 @@ LOGO_PATH     = os.path.join(APP_DIR, "petra_logo.png")
 ALARM_THRESHOLD = 3
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs("uploads", exist_ok=True)   # relative path — used for DB storage & display
 
 # ---------------------------------------------------------------------------
 # Database Layer  (SQLite — swap for PostgreSQL by changing get_connection)
@@ -294,13 +296,14 @@ def get_chart_data() -> dict:
 
 
 def save_image(uploaded_file) -> str | None:
-    """Save uploaded image and return its path, or None on failure."""
+    """Save uploaded image to uploads/ and return its RELATIVE path for DB storage."""
     try:
-        filename = f"{uuid.uuid4().hex}.png"
-        filepath = os.path.join(UPLOAD_DIR, filename)
+        # Relative path — stays valid across Streamlit Cloud restarts
+        file_path = os.path.join("uploads", f"{int(time.time())}_{uploaded_file.name}")
         img = Image.open(uploaded_file).convert("RGB")
-        img.save(filepath, optimize=True)
-        return filepath
+        img.save(file_path, optimize=True)
+        log.info("Image saved: %s", file_path)
+        return file_path          # e.g.  "uploads/1714000000_photo.jpg"
     except Exception as exc:
         log.error("save_image: %s", exc)
         st.warning(f"Image could not be saved: {exc}")
@@ -508,12 +511,14 @@ with tab_submit:
                 if st.button("Toggle Resolved", key=f"res_{e['id']}"):
                     toggle_resolved(e["id"])
                     st.rerun()
-                    img_path = e.get("image_path")
-                    if img_path and os.path.exists(img_path):
-                     st.image(img_path, use_container_width=True)
+            with col_b:
+                if e["image_path"]:
+                    # Resolve relative path from the app's working directory
+                    abs_path = os.path.join(os.getcwd(), e["image_path"])
+                    if os.path.exists(abs_path):
+                        st.image(abs_path, use_container_width=True)
                     else:
-                     st.info("📸 لا توجد صورة")
-
+                        st.caption("📷 Image not available")
 
 
 # ===========================  TAB 2 : DASHBOARD  ===========================
